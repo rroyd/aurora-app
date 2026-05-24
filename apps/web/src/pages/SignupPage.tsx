@@ -1,35 +1,22 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { registerSchema, type RegisterInput } from '@shared/contracts';
 import { Button } from '@/components/ui/Button';
 import { Field } from '@/components/ui/Field';
 import { Input } from '@/components/ui/Input';
 import { PageTransition } from '@/components/layout/PageTransition';
-import { useRegister } from '@/features/auth/api';
-import { useToast } from '@/components/ui/Toast';
-import { ApiError } from '@/lib/api';
+import { useSignupFlow } from '@/features/auth/useAuthFlows';
 
 export function SignupPage() {
-  const navigate = useNavigate();
-  const register = useRegister();
-  const toast = useToast();
+  const signup = useSignupFlow();
   const {
     register: rhf,
     handleSubmit,
     formState: { errors, isSubmitting },
   } = useForm<RegisterInput>({ resolver: zodResolver(registerSchema) });
 
-  const onSubmit = handleSubmit(async (values) => {
-    try {
-      await register.mutateAsync(values);
-      toast.success('Welcome to Aurora');
-      navigate('/');
-    } catch (e) {
-      const msg = e instanceof ApiError ? e.message : 'Could not sign up';
-      toast.error('Sign-up failed', msg);
-    }
-  });
+  const onSubmit = handleSubmit(signup.submit);
 
   return (
     <PageTransition>

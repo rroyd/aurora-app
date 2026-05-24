@@ -7,16 +7,14 @@ import { Button } from '@/components/ui/Button';
 import { ProductImage } from '@/components/ui/ProductImage';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { PageTransition } from '@/components/layout/PageTransition';
-import { useUnifiedCart } from '@/features/cart/useUnifiedCart';
+import { useAddProductToCart } from '@/features/cart/useAddProductToCart';
 import { useProduct } from '@/features/products/api';
-import { useCartDrawer } from '@/stores/cart-drawer.store';
 import { formatMoney } from '@/lib/format';
 
 export function ProductPage() {
   const { slug = '' } = useParams();
   const product = useProduct(slug);
-  const cart = useUnifiedCart();
-  const openCart = useCartDrawer((s) => s.open);
+  const addToCart = useAddProductToCart();
   const [qty, setQty] = useState(1);
 
   if (product.isLoading) {
@@ -105,20 +103,7 @@ export function ProductPage() {
             <Button
               size="lg"
               disabled={outOfStock}
-              onClick={() => {
-                cart.add({
-                  product: {
-                    productId: p.id,
-                    slug: p.slug,
-                    name: p.name,
-                    imageUrl: p.imageUrl,
-                    priceCents: p.priceCents,
-                    currency: p.currency,
-                  },
-                  quantity: qty,
-                });
-                openCart();
-              }}
+              onClick={() => addToCart(p, qty)}
             >
               {outOfStock ? 'Out of stock' : 'Add to cart'}
             </Button>

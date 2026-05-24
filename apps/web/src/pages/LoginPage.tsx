@@ -1,35 +1,22 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { loginSchema, type LoginInput } from '@shared/contracts';
 import { Button } from '@/components/ui/Button';
 import { Field } from '@/components/ui/Field';
 import { Input } from '@/components/ui/Input';
 import { PageTransition } from '@/components/layout/PageTransition';
-import { useLogin } from '@/features/auth/api';
-import { useToast } from '@/components/ui/Toast';
-import { ApiError } from '@/lib/api';
+import { useLoginFlow } from '@/features/auth/useAuthFlows';
 
 export function LoginPage() {
-  const navigate = useNavigate();
-  const login = useLogin();
-  const toast = useToast();
+  const login = useLoginFlow();
   const {
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
   } = useForm<LoginInput>({ resolver: zodResolver(loginSchema) });
 
-  const onSubmit = handleSubmit(async (values) => {
-    try {
-      await login.mutateAsync(values);
-      toast.success('Welcome back');
-      navigate('/');
-    } catch (e) {
-      const msg = e instanceof ApiError ? e.message : 'Could not sign in';
-      toast.error('Sign-in failed', msg);
-    }
-  });
+  const onSubmit = handleSubmit(login.submit);
 
   return (
     <PageTransition>

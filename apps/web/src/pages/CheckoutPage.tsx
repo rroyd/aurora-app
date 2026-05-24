@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { Check } from 'lucide-react';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import {
   addressSchema,
   cardSchema,
@@ -15,12 +15,10 @@ import { Field } from '@/components/ui/Field';
 import { Input } from '@/components/ui/Input';
 import { Card } from '@/components/ui/Card';
 import { ProductImage } from '@/components/ui/ProductImage';
-import { useToast } from '@/components/ui/Toast';
 import { PageTransition } from '@/components/layout/PageTransition';
 import { useAuth } from '@/features/auth/useAuth';
 import { useUnifiedCart } from '@/features/cart/useUnifiedCart';
-import { usePlaceOrder } from '@/features/orders/api';
-import { ApiError } from '@/lib/api';
+import { useCheckoutFlow } from '@/features/checkout/useCheckoutFlow';
 import { formatMoney } from '@/lib/format';
 
 const STEPS = ['Shipping', 'Payment', 'Review'] as const;
@@ -29,9 +27,7 @@ type Step = (typeof STEPS)[number];
 export function CheckoutPage() {
   const { isAuthenticated } = useAuth();
   const cart = useUnifiedCart();
-  const navigate = useNavigate();
-  const toast = useToast();
-  const placeOrder = usePlaceOrder();
+  const checkout = useCheckoutFlow();
 
   const [step, setStep] = useState<Step>('Shipping');
   const [address, setAddress] = useState<Address | null>(null);
@@ -72,17 +68,6 @@ export function CheckoutPage() {
     );
   }
 
-  async function placeOrderNow(addr: Address, c: CardInput) {
-    try {
-      const order = await placeOrder.mutateAsync({ shippingAddress: addr, card: c });
-      toast.success('Order placed', `#${order.id.slice(0, 8)}`);
-      navigate(`/account/orders/${order.id}`);
-    } catch (e) {
-      if (e instanceof ApiError) toast.error('Payment failed', e.message);
-      else toast.error('Could not place order');
-    }
-  }
-
   return (
     <PageTransition>
       <div className="grid gap-8 lg:grid-cols-3">
@@ -113,8 +98,8 @@ export function CheckoutPage() {
                 address={address}
                 card={card}
                 onBack={() => setStep('Payment')}
-                onConfirm={() => placeOrderNow(address, card)}
-                loading={placeOrder.isPending}
+                onConfirm={() => checkout.submit(address, card)}
+                loading={checkout.isPending}
               />
             )}
           </div>

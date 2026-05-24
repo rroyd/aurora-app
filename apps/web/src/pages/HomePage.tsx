@@ -1,14 +1,12 @@
 import { motion } from 'framer-motion';
-import { useMemo } from 'react';
-import { useSearchParams } from 'react-router-dom';
-import type { ListProductsQuery, Sort } from '@shared/contracts';
+import type { Sort } from '@shared/contracts';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { useCategories, useProducts } from '@/features/products/api';
+import { useProductFilters } from '@/features/products/useProductFilters';
 import { ProductCard } from '@/features/products/components/ProductCard';
-import { useUnifiedCart } from '@/features/cart/useUnifiedCart';
-import { useCartDrawer } from '@/stores/cart-drawer.store';
+import { useAddProductToCart } from '@/features/cart/useAddProductToCart';
 import { PageTransition } from '@/components/layout/PageTransition';
 
 const SORTS: { value: Sort; label: string }[] = [
@@ -19,32 +17,10 @@ const SORTS: { value: Sort; label: string }[] = [
 ];
 
 export function HomePage() {
-  const [params, setParams] = useSearchParams();
-  const filters = useMemo<Partial<ListProductsQuery>>(() => {
-    const minPriceRaw = params.get('minPrice');
-    const maxPriceRaw = params.get('maxPrice');
-    return {
-      q: params.get('q') ?? undefined,
-      category: params.get('category') ?? undefined,
-      sort: (params.get('sort') as Sort) ?? undefined,
-      minPrice: minPriceRaw ? Number(minPriceRaw) : undefined,
-      maxPrice: maxPriceRaw ? Number(maxPriceRaw) : undefined,
-      limit: 20,
-    };
-  }, [params]);
-
+  const { filters, setFilter } = useProductFilters();
   const products = useProducts(filters);
   const categories = useCategories();
-  const cart = useUnifiedCart();
-  const openCart = useCartDrawer((s) => s.open);
-
-  function updateParam(key: string, value: string | undefined) {
-    setParams((prev) => {
-      if (value === undefined || value === '') prev.delete(key);
-      else prev.set(key, value);
-      return prev;
-    });
-  }
+  const addToCart = useAddProductToCart();
 
   return (
     <PageTransition>
@@ -53,7 +29,7 @@ export function HomePage() {
       <div className="mt-10 flex flex-wrap items-center justify-between gap-3">
         <div className="flex flex-wrap gap-2">
           <button
-            onClick={() => updateParam('category', undefined)}
+            onClick={() => setFilter('category', undefined)}
             className={`rounded-full border px-3 py-1 text-sm transition ${
               !filters.category ? 'border-brand-600 bg-brand-50 text-brand-700' : 'border-slate-200 bg-surface text-ink-muted hover:bg-surface-muted'
             }`}
@@ -63,7 +39,7 @@ export function HomePage() {
           {categories.data?.items.map((c) => (
             <button
               key={c.id}
-              onClick={() => updateParam('category', c.slug)}
+              onClick={() => setFilter('category', c.slug)}
               className={`rounded-full border px-3 py-1 text-sm transition ${
                 filters.category === c.slug
                   ? 'border-brand-600 bg-brand-50 text-brand-700'
@@ -78,7 +54,7 @@ export function HomePage() {
           <span className="text-ink-muted">Sort:</span>
           <select
             value={filters.sort ?? ''}
-            onChange={(e) => updateParam('sort', e.target.value || undefined)}
+            onChange={(e) => setFilter('sort', e.target.value || undefined)}
             className="h-9 rounded-md border border-slate-200 bg-surface px-2 text-sm focus:border-brand-500 focus:outline-none"
           >
             <option value="">Default</option>
@@ -95,7 +71,7 @@ export function HomePage() {
         <p className="mt-4 flex items-center gap-2 text-sm text-ink-muted">
           Results for <Badge tone="brand">{filters.q}</Badge>
           <button
-            onClick={() => updateParam('q', undefined)}
+            onClick={() => setFilter('q', undefined)}
             className="text-brand-600 hover:underline"
           >
             Clear
@@ -125,19 +101,7 @@ export function HomePage() {
                 >
                   <ProductCard
                     product={product}
-                    onAddToCart={(p) => {
-                      cart.add({
-                        product: {
-                          productId: p.id,
-                          slug: p.slug,
-                          name: p.name,
-                          imageUrl: p.imageUrl,
-                          priceCents: p.priceCents,
-                          currency: p.currency,
-                        },
-                      });
-                      openCart();
-                    }}
+                    onAddToCart={(p) => addToCart(p)}
                   />
                 </motion.div>
               )),

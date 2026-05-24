@@ -1,49 +1,15 @@
-import { zodResolver } from '@hookform/resolvers/zod';
-import { useForm } from 'react-hook-form';
-import {
-  changePasswordSchema,
-  updateProfileSchema,
-  type ChangePasswordInput,
-  type UpdateProfileInput,
-} from '@shared/contracts';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Field } from '@/components/ui/Field';
 import { Input } from '@/components/ui/Input';
-import { useToast } from '@/components/ui/Toast';
 import { PageTransition } from '@/components/layout/PageTransition';
 import { useAuth } from '@/features/auth/useAuth';
-import { apiRequest } from '@/lib/api';
+import { usePasswordForm, useProfileForm } from '@/features/account/useAccountForms';
 
 export function AccountPage() {
   const { user } = useAuth();
-  const toast = useToast();
-  const profile = useForm<UpdateProfileInput>({
-    resolver: zodResolver(updateProfileSchema),
-    defaultValues: { firstName: user?.firstName ?? '', lastName: user?.lastName ?? '' },
-  });
-  const password = useForm<ChangePasswordInput>({
-    resolver: zodResolver(changePasswordSchema),
-  });
-
-  const saveProfile = profile.handleSubmit(async (values) => {
-    try {
-      await apiRequest<void>('/v1/users/me', { method: 'PATCH', body: values });
-      toast.success('Profile updated');
-    } catch {
-      toast.error('Could not update profile');
-    }
-  });
-
-  const savePassword = password.handleSubmit(async (values) => {
-    try {
-      await apiRequest<void>('/v1/users/me/password', { method: 'POST', body: values });
-      password.reset();
-      toast.success('Password changed');
-    } catch (e) {
-      toast.error('Could not change password', (e as Error).message);
-    }
-  });
+  const { form: profile, submit: saveProfile } = useProfileForm();
+  const { form: password, submit: savePassword } = usePasswordForm();
 
   return (
     <PageTransition>
