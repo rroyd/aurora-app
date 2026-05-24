@@ -2,7 +2,7 @@
 
 [![CI](https://github.com/rroyd/aurora-app/actions/workflows/ci.yml/badge.svg)](https://github.com/rroyd/aurora-app/actions/workflows/ci.yml)
 
-A production-grade full-stack eCommerce platform — generated from an AI Blueprint (`ai/`) and hardened into a working monorepo. The repo is the deliverable for the *AI-Driven Software Engineering* assignment.
+A production-grade full-stack eCommerce platform — generated from an AI Blueprint (`ai/`) and hardened into a working monorepo.
 
 This document is written for engineers who are about to read, run, extend, or operate the system. It is intentionally **opinionated**: every choice is named with a reason, every trade-off is called out, and every "this would need to change for production" item is explicit.
 
