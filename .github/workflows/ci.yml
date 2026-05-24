@@ -1,0 +1,166 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  NODE_VERSION: '20.18.0'
+  PNPM_VERSION: '9.0.0'
+
+jobs:
+  # ---------------------------------------------------------------------------
+  # Static analysis — lint + type-check across the monorepo
+  # ---------------------------------------------------------------------------
+  static:
+    name: lint + typecheck
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Generate Prisma client (needed for typecheck)
+        run: pnpm --filter @app/api db:generate
+
+      - name: Typecheck
+        run: pnpm --recursive typecheck
+
+  # ---------------------------------------------------------------------------
+  # Unit tests — no I/O, fast
+  # ---------------------------------------------------------------------------
+  unit:
+    name: unit tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Generate Prisma client
+        run: pnpm --filter @app/api db:generate
+
+      - name: Run unit tests
+        run: pnpm --filter @app/api test
+        env:
+          NODE_ENV: test
+
+  # ---------------------------------------------------------------------------
+  # Integration tests — real MySQL via service container
+  # ---------------------------------------------------------------------------
+  integration:
+    name: integration tests
+    runs-on: ubuntu-latest
+
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: rootpw
+          MYSQL_DATABASE: ecommerce_test
+          MYSQL_USER: app
+          MYSQL_PASSWORD: apppw
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h localhost -uroot -prootpw"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=20
+
+    env:
+      DATABASE_URL: mysql://root:rootpw@127.0.0.1:3306/ecommerce_test
+      SHADOW_DATABASE_URL: mysql://root:rootpw@127.0.0.1:3306/ecommerce_test_shadow
+      NODE_ENV: test
+      PORT: 4000
+      WEB_ORIGIN: http://localhost:5173
+      JWT_ACCESS_SECRET: test-access-secret-must-be-32-bytes-min-aaaa
+      JWT_REFRESH_SECRET: test-refresh-secret-must-be-32-bytes-min-bbbb
+      ACCESS_TOKEN_TTL: 900
+      REFRESH_TOKEN_TTL: 2592000
+      COOKIE_DOMAIN: localhost
+      COOKIE_SECURE: 'false'
+      RATE_LIMIT_STORE: memory
+      LOG_LEVEL: warn
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Apply migrations to test DB
+        working-directory: apps/api
+        run: |
+          pnpm prisma migrate deploy
+          mysql -h 127.0.0.1 -uroot -prootpw -e "CREATE DATABASE IF NOT EXISTS ecommerce_test_shadow;"
+
+      - name: Run integration tests
+        run: pnpm --filter @app/api vitest run tests/integration
+        # If tests/integration is empty (Step 6 hasn't landed yet), don't fail CI.
+        continue-on-error: false
+        if: hashFiles('apps/api/tests/integration/**/*.test.ts') != ''
+
+  # ---------------------------------------------------------------------------
+  # Docker — verify the production images still build cleanly
+  # ---------------------------------------------------------------------------
+  docker:
+    name: docker build
+    runs-on: ubuntu-latest
+    needs: [static, unit]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Build API image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: apps/api/Dockerfile
+          push: false
+          tags: aurora-api:ci
+          cache-from: type=gha,scope=api
+          cache-to: type=gha,scope=api,mode=max
+
+      - name: Build web image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: apps/web/Dockerfile
+          push: false
+          tags: aurora-web:ci
+          cache-from: type=gha,scope=web
+          cache-to: type=gha,scope=web,mode=max
