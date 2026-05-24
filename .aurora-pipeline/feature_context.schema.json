@@ -1,0 +1,253 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aurora.dev/feature_context.schema.json",
+  "title": "Feature Context",
+  "description": "Shared state file consumed and updated by the 5-agent feature pipeline.",
+  "type": "object",
+  "required": [
+    "ticket_id",
+    "status",
+    "product_requirements",
+    "architecture_spec",
+    "execution_log",
+    "test_results",
+    "review_status"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "ticket_id": {
+      "type": "string",
+      "pattern": "^[A-Z]+-\\d+$",
+      "description": "External ticket identifier (e.g., FEAT-123, BUG-42)."
+    },
+    "title": { "type": "string" },
+    "status": {
+      "type": "string",
+      "enum": [
+        "draft",
+        "triaged",
+        "designed",
+        "in_progress",
+        "tested",
+        "in_review",
+        "approved",
+        "rejected",
+        "merged"
+      ]
+    },
+    "created_at": { "type": ["string", "null"], "format": "date-time" },
+    "updated_at": { "type": ["string", "null"], "format": "date-time" },
+    "raw_request": { "type": "string" },
+
+    "product_requirements": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "summary": { "type": "string" },
+        "business_value": { "type": "string" },
+        "acceptance_criteria": {
+          "type": "array",
+          "minItems": 3,
+          "items": {
+            "type": "object",
+            "required": ["id", "given", "when", "then"],
+            "additionalProperties": false,
+            "properties": {
+              "id": { "type": "string", "pattern": "^AC-\\d+$" },
+              "given": { "type": "string" },
+              "when": { "type": "string" },
+              "then": { "type": "string" }
+            }
+          }
+        },
+        "edge_cases": {
+          "type": "array",
+          "minItems": 3,
+          "items": {
+            "type": "object",
+            "required": ["id", "scenario", "expected_behavior"],
+            "additionalProperties": false,
+            "properties": {
+              "id": { "type": "string", "pattern": "^EC-\\d+$" },
+              "scenario": { "type": "string" },
+              "expected_behavior": { "type": "string" }
+            }
+          }
+        },
+        "out_of_scope": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "owner_decisions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["question", "decision", "rationale"],
+            "properties": {
+              "question": { "type": "string" },
+              "decision": { "type": "string" },
+              "rationale": { "type": "string" }
+            }
+          }
+        },
+        "rejected_reason": { "type": ["string", "null"] }
+      }
+    },
+
+    "architecture_spec": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "summary": { "type": "string" },
+        "interfaces": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["name", "definition"],
+            "properties": {
+              "name": { "type": "string" },
+              "file": { "type": "string" },
+              "definition": { "type": "string", "description": "Raw TypeScript source." }
+            }
+          }
+        },
+        "api_contracts": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["method", "path", "request", "responses"],
+            "properties": {
+              "method": { "type": "string", "enum": ["GET", "POST", "PUT", "PATCH", "DELETE"] },
+              "path": { "type": "string" },
+              "auth": { "type": "string", "enum": ["public", "cookie", "bearer"] },
+              "request": {
+                "type": "object",
+                "properties": {
+                  "params": { "type": "string" },
+                  "query": { "type": "string" },
+                  "body": { "type": "string" },
+                  "headers": { "type": "string" }
+                }
+              },
+              "responses": {
+                "type": "object",
+                "patternProperties": {
+                  "^\\d{3}$": { "type": "string" }
+                }
+              },
+              "idempotent": { "type": "boolean" }
+            }
+          }
+        },
+        "schema_migrations": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["name", "sql"],
+            "properties": {
+              "name": { "type": "string" },
+              "sql": { "type": "string" },
+              "destructive": { "type": "boolean", "default": false },
+              "deprecation_plan": { "type": ["string", "null"] }
+            }
+          }
+        },
+        "impacted_files": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["path", "impact"],
+            "properties": {
+              "path": { "type": "string" },
+              "impact": { "type": "string", "enum": ["new", "modified", "deprecated"] },
+              "reason": { "type": "string" }
+            }
+          }
+        },
+        "feature_flag": {
+          "type": ["object", "null"],
+          "properties": {
+            "key": { "type": "string" },
+            "default": { "type": "boolean" },
+            "description": { "type": "string" }
+          }
+        },
+        "non_functional_requirements": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    },
+
+    "execution_log": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["timestamp", "agent", "action"],
+        "properties": {
+          "timestamp": { "type": "string", "format": "date-time" },
+          "agent": {
+            "type": "string",
+            "enum": ["product-owner", "architect", "engineer", "sdet", "reviewer"]
+          },
+          "action": { "type": "string" },
+          "files_created": { "type": "array", "items": { "type": "string" } },
+          "files_modified": { "type": "array", "items": { "type": "string" } },
+          "notes": { "type": "string" }
+        }
+      }
+    },
+
+    "test_results": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "page_objects": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "test_files": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "acceptance_coverage": {
+          "type": "object",
+          "patternProperties": {
+            "^AC-\\d+$": {
+              "type": "array",
+              "items": { "type": "string", "description": "Test file:test name" }
+            }
+          }
+        },
+        "edge_case_coverage": {
+          "type": "object",
+          "patternProperties": {
+            "^EC-\\d+$": {
+              "type": "array",
+              "items": { "type": "string" }
+            }
+          }
+        }
+      }
+    },
+
+    "review_status": {
+      "type": "string",
+      "enum": ["pending", "APPROVED_FOR_MERGE", "REJECTED_WITH_FEEDBACK"]
+    },
+    "review_feedback": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["severity", "file", "line", "issue", "fix_snippet"],
+        "properties": {
+          "severity": { "type": "string", "enum": ["security", "complexity", "coverage", "style"] },
+          "file": { "type": "string" },
+          "line": { "type": "integer", "minimum": 1 },
+          "issue": { "type": "string" },
+          "fix_snippet": { "type": "string" }
+        }
+      }
+    }
+  }
+}

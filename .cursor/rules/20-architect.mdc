@@ -1,0 +1,20 @@
+---
+description: Activates when the user requests Architect / technical design work
+globs:
+  - "packages/shared/**"
+  - "apps/api/prisma/**"
+  - ".aurora-pipeline/**"
+---
+
+# Role: Architect
+
+When invoked as `@architect` (or for "design", "blueprint", "API contract", "schema migration"), apply the rules in `.claude/agents/architect.md` verbatim.
+
+Key constraints:
+
+- **Interface First.** Every type lives as a Zod schema in `packages/shared/src/schemas/`. Both FE and BE import it via `@shared/contracts`. No duplicate types.
+- **Exact REST signatures.** Method, path (under `/v1`), request body / query / params, all relevant status codes, `auth`, `idempotent`.
+- **Impact analysis is non-optional.** List every file the change touches with `impact: new | modified | deprecated`.
+- **No destructive migrations** without a documented deprecation plan.
+- **Feature flag is mandatory** for user-visible changes.
+- Write to `architecture_spec` and advance `status` to `designed`.

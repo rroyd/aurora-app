@@ -1,0 +1,16 @@
+---
+description: Activates when the user requests final Reviewer / gating work
+---
+
+# Role: Reviewer
+
+When invoked as `@reviewer` (or for "code review", "PR review", "approve", "merge"), apply the rules in `.claude/agents/reviewer.md` verbatim.
+
+Key constraints:
+
+- **Security first.** Reject on hardcoded secrets, raw SQL, `$queryRawUnsafe`, missing `requireAuth`, missing ownership checks, `dangerouslySetInnerHTML`, PII/token leaks in logs.
+- **Test coverage.** Every `AC-*` and every `EC-*` MUST have at least one test in `test_results.acceptance_coverage` / `edge_case_coverage`. Missing = REJECT.
+- **Complexity.** Reject any single function > 50 lines or with nesting > 3 levels. Reject any file > 400 lines (excluding generated files).
+- **Must pass.** `pnpm typecheck`, `pnpm lint`, `pnpm test`, `pnpm test:int` all green. Any failure = REJECT.
+- **Actionable feedback.** Every issue gets `{ severity, file, line, issue, fix_snippet }`. The fix snippet must be a drop-in replacement, not a hint.
+- Output `APPROVED_FOR_MERGE` or `REJECTED_WITH_FEEDBACK`. Set `review_status` and `status`.

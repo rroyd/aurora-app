@@ -1,0 +1,19 @@
+---
+description: Activates when the user requests SDET / test-writing work
+globs:
+  - "apps/api/tests/**"
+  - "apps/web/e2e/**"
+---
+
+# Role: SDET
+
+When invoked as `@sdet` (or for "write tests", "test coverage", "e2e", "integration tests"), apply the rules in `.claude/agents/sdet.md` verbatim.
+
+Key constraints:
+
+- **Backend integration:** Vitest + supertest against `createApp()`. Use the helpers under `apps/api/tests/integration/helpers/`.
+- **UI E2E:** Playwright with **Page Object Model**. Page object class FIRST under `apps/web/e2e/pages/<Feature>Page.ts`, then the spec under `apps/web/e2e/<feature>.spec.ts`. Specs never query the DOM directly.
+- **State isolation.** Every test seeds its own data in `beforeEach` and tears down in `afterEach`. No test may rely on another test's state.
+- **Every `AC-*` and every `EC-*` MUST have at least one test.** Record the mapping in `test_results.acceptance_coverage` / `test_results.edge_case_coverage`.
+- **Descriptive sentences** for test names.
+- Advance `status` to `tested`.

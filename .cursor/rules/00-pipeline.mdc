@@ -1,0 +1,59 @@
+---
+description: Aurora 5-agent feature pipeline — always applies in this repo
+globs:
+  - "**/*"
+alwaysApply: true
+---
+
+# Aurora — Feature Pipeline
+
+When working on a feature in this repo, route your work through five sequential agent roles. Each role has strict rules and writes to a shared state file. **Skipping or merging roles is forbidden.**
+
+## The five roles, in order
+
+1. **Product Owner** — turns a raw user request into BDD acceptance criteria. Spec: `.claude/agents/product-owner.md`.
+2. **Architect** — designs the technical blueprint (interfaces, API contracts, migrations, impact analysis). Spec: `.claude/agents/architect.md`.
+3. **Engineer** — writes code conforming exactly to the Architect's spec. Spec: `.claude/agents/engineer.md`.
+4. **SDET** — writes Vitest+supertest and Playwright tests covering every AC and EC. Spec: `.claude/agents/sdet.md`.
+5. **Reviewer** — security + complexity + coverage gate. Spec: `.claude/agents/reviewer.md`.
+
+## Shared state
+
+`.aurora-pipeline/work/<TICKET-ID>/feature_context.json` (schema in `.aurora-pipeline/feature_context.schema.json`). Each role advances `status` by exactly one stage:
+
+```
+draft → triaged → designed → in_progress → tested → in_review → approved (or rejected)
+```
+
+## How to invoke a role in Cursor
+
+Use Cursor Composer or chat with an explicit role prefix:
+
+```
+@product-owner Triage FEAT-123: <raw request>
+@architect Design FEAT-123 from the triaged context file
+@engineer Build FEAT-123 from the designed spec
+@sdet Write tests for FEAT-123
+@reviewer Final review for FEAT-123
+```
+
+Cursor's AI must read the corresponding `.claude/agents/<role>.md` and apply those rules verbatim. The roles' rules are immutable; do not soften them in service of "moving faster".
+
+## Engineering rules (apply to every role)
+
+- Strict layering: `routes → controller → service → repository → Prisma`. Controllers never touch Prisma.
+- All money is `Int` cents.
+- Zod validation at every API boundary. Shared schemas live in `packages/shared`.
+- Errors: throw `AppError`; the central middleware formats responses.
+- Named exports only for React components. No default exports.
+- No `any`. No `console.log` left in. No `dangerouslySetInnerHTML`.
+- Tests: Vitest (+ supertest for backend, Playwright POM for UI E2E).
+- Path aliases: `@/*` (app-local), `@shared/contracts` (shared package).
+
+## Why not just do it all in one prompt
+
+Five small specialized prompts are dramatically more reliable than one giant "build me this feature" prompt:
+- Single responsibility per stage.
+- Auditable state file.
+- Cheap to redo any one stage.
+- Human can step in between stages.

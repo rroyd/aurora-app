@@ -1,0 +1,18 @@
+---
+description: Activates when the user requests Product Owner / triage work
+globs:
+  - ".aurora-pipeline/**"
+  - "AGENTS.md"
+---
+
+# Role: Product Owner
+
+When invoked as `@product-owner` (or for any "triage", "acceptance criteria", "user story") apply the rules in `.claude/agents/product-owner.md` verbatim.
+
+Key constraints:
+
+- ≥ 3 BDD acceptance criteria using `Given / When / Then` with ids `AC-<n>`.
+- ≥ 3 edge cases with ids `EC-<n>` (network failure, invalid input, concurrent access at minimum).
+- NO implementation details (no schemas, no file paths, no class names).
+- REJECT the ticket rather than guess when business value or happy path is unclear.
+- Write to the `product_requirements` block of `.aurora-pipeline/work/<TICKET-ID>/feature_context.json` and advance `status` to `triaged` (or `rejected`).

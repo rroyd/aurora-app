@@ -1,0 +1,40 @@
+# Aurora — Cursor rules (legacy single-file)
+#
+# When working on a feature in this repo, route your work through the
+# five-agent pipeline defined in AGENTS.md. Each role has strict rules
+# in .claude/agents/<role>.md. Shared state lives in
+# .aurora-pipeline/work/<TICKET-ID>/feature_context.json.
+#
+# Per-stage rules also live in .cursor/rules/*.mdc; this single-file
+# version is here only for older Cursor versions that do not read .mdc.
+
+# ALWAYS read AGENTS.md before doing any meaningful work.
+# - The 5 roles (Product Owner → Architect → Engineer → SDET → Reviewer) are
+#   sequential and non-skippable.
+# - Each role owns specific fields in feature_context.json and may not touch
+#   fields owned by another role.
+
+# ENGINEERING RULES (from ai/guidelines/*.md, enforced for ALL roles):
+# - TypeScript strict, no `any`, no `console.log` left in.
+# - Layering: routes -> controller -> service -> repository -> Prisma.
+#   Controllers MUST NOT touch Prisma.
+# - Money is stored as Int cents.
+# - Validation: Zod on every body/query/param. Schemas live in packages/shared.
+# - Errors: throw AppError, never try/catch in controllers, never
+#   res.status(...).json({...}) for errors.
+# - Named exports only for React components.
+# - Cookie-based JWT auth; argon2 for passwords.
+# - Tests: Vitest + supertest for backend, Playwright POM for UI E2E.
+# - No `dangerouslySetInnerHTML`.
+
+# WHEN ASKED TO BUILD A FEATURE:
+# 1. Look at .aurora-pipeline/work/<TICKET-ID>/feature_context.json.
+# 2. Identify which stage the ticket is currently in (status field).
+# 3. Act ONLY as the role that owns that stage. Do not try to be a
+#    one-shot generalist.
+# 4. Reference the role's full spec at .claude/agents/<role>.md.
+# 5. Update feature_context.json per the role's output protocol.
+
+# ALWAYS PREFER to use the Claude Code slash commands if available:
+# /feature-init, /feature-triage, /feature-design, /feature-build,
+# /feature-test, /feature-review, /feature-pipeline.

@@ -1,0 +1,35 @@
+{
+  "ticket_id": "FEAT-XXX",
+  "title": "",
+  "status": "draft",
+  "created_at": null,
+  "updated_at": null,
+  "raw_request": "",
+  "product_requirements": {
+    "summary": "",
+    "business_value": "",
+    "acceptance_criteria": [],
+    "edge_cases": [],
+    "out_of_scope": [],
+    "owner_decisions": [],
+    "rejected_reason": null
+  },
+  "architecture_spec": {
+    "summary": "",
+    "interfaces": [],
+    "api_contracts": [],
+    "schema_migrations": [],
+    "impacted_files": [],
+    "feature_flag": null,
+    "non_functional_requirements": []
+  },
+  "execution_log": [],
+  "test_results": {
+    "page_objects": [],
+    "test_files": [],
+    "acceptance_coverage": {},
+    "edge_case_coverage": {}
+  },
+  "review_status": "pending",
+  "review_feedback": []
+}

@@ -1,0 +1,20 @@
+---
+description: Activates when the user requests Engineer / implementation work
+globs:
+  - "apps/api/**"
+  - "apps/web/**"
+  - "packages/shared/**"
+---
+
+# Role: Engineer
+
+When invoked as `@engineer` (or for "implement", "build", "code this"), apply the rules in `.claude/agents/engineer.md` verbatim.
+
+Key constraints:
+
+- **Architectural Obedience.** Do not alter the Architect's interfaces, contracts, or migrations. If a contract is flawed, HALT and flag — do not diverge.
+- **Feature flag** every new UI surface and every new API route.
+- **Idempotency** on every POST/PUT (Idempotency-Key header or natural unique key).
+- **No placeholders.** No `// TODO`, no `/* ...rest */`, no `// add logic here`.
+- **File-path headers.** Prefix every code block with `### <path>` so deployment scripts can save them.
+- Update `execution_log` and (only when the entire feature is built) advance `status` to `in_progress`.
