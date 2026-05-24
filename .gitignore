@@ -24,3 +24,9 @@ coverage/
 *.tsbuildinfo
 
 apps/api/prisma/migrations/dev.db*
+
+# Playwright
+apps/web/playwright-report/
+apps/web/test-results/
+apps/web/blob-report/
+apps/web/.playwright/

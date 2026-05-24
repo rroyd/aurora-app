@@ -61,11 +61,38 @@ For each frontend feature:
 
 ## 4 — Searches consulted
 
+### Technical searches (Anthropic + library docs + general web)
+
 - "Prisma cursor pagination with cursor+skip pattern" — to confirm `{ cursor: { id }, skip: 1 }` semantics for stable pagination.
 - "Express + helmet + CORS credentials cookie SameSite" — confirmed `sameSite=lax` + `credentials: 'include'` on FE.
 - "Argon2id recommended params 2026" — confirmed `m=64MB`, `t=3`, `p=1`.
 - "TanStack Query v5 useInfiniteQuery initialPageParam" — confirmed v5 signature.
 - "Radix Dialog with Framer Motion AnimatePresence" — confirmed `forceMount` + `asChild` pattern.
+
+### Google searches (operational / environment fixes)
+
+- **"how to stop local mysql service on macOS"** — the Docker `mysql` container failed to bind to `:3306` because a host-installed MySQL service was already listening on that port. Resolution found via Google: `brew services stop mysql` (also documented `sudo /usr/local/mysql/support-files/mysql.server stop` as the non-Homebrew variant). After stopping the host service, `make db-up` succeeded.
+- "Docker Desktop port already in use 3306" — confirmed the diagnosis above (host-OS MySQL holding the port, not another container).
+
+### Gemini (Google Gemini) inquiries — used for human-side brainstorming, NOT code generation
+
+Gemini was used as a "second-opinion" / brainstorm partner BEFORE prompting Claude. Its outputs were filtered by the human and then re-phrased as instructions to Claude. Gemini never wrote code that landed in this repo.
+
+- **"What should I ask Claude to focus on first when generating a full-stack TypeScript e-commerce app?"** — Gemini suggested locking down (1) the auth strategy, (2) the data model for products/orders, (3) the testing approach. This shaped the Stage-0 clarifying questions Claude later asked the human.
+- **"Suggest a clean architecture for a small-team monorepo handling auth + catalog + cart + checkout."** — Gemini sketched a modular-monolith with a shared `contracts` package and a strict layering rule (routes → controller → service → repository). This matched the AI's later proposal and gave the human confidence the direction was conventional, not idiosyncratic.
+- **"What pitfalls should I watch for when an LLM generates Prisma + Express code?"** — Gemini listed: shadow-database setup, N+1 queries, transaction isolation defaults, unbounded `findMany`. These became items on the human's verification checklist when reviewing Claude's output.
+
+## 4b — Claude Code session continuity
+
+This project spans multiple Claude Code sessions. Resumed sessions used the `--resume <session-id>` flag so that the model had full prior context (not just the repo state) when continuing work.
+
+Example used for the cart-drawer fix and follow-up documentation:
+
+```bash
+claude --resume 4b24d4bd-9bce-4c81-a17e-76371c1d6d18
+```
+
+Why resume rather than start fresh: the previous session already had the mental model of the Sheet/Dialog/AnimatePresence interaction. A cold start would have re-derived it, costing time and risking a different (worse) fix.
 
 ## 5 — Manual interventions (humans did this, not the AI)
 

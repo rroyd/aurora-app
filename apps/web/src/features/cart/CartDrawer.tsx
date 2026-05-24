@@ -1,4 +1,3 @@
-import { motion } from 'framer-motion';
 import { Minus, Plus, Trash2 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/Button';
@@ -56,14 +55,7 @@ export function CartDrawer() {
       ) : (
         <ul className="divide-y divide-slate-100">
           {cart.items.map((item) => (
-            <motion.li
-              key={item.productId}
-              layout
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="flex gap-3 py-4"
-            >
+            <li key={item.productId} className="flex gap-3 py-4">
               <Link to={`/products/${item.slug}`} onClick={close}>
                 <ProductImage
                   src={item.imageUrl}
@@ -110,7 +102,7 @@ export function CartDrawer() {
                   </button>
                 </div>
               </div>
-            </motion.li>
+            </li>
           ))}
         </ul>
       )}

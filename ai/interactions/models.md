@@ -20,3 +20,12 @@ Documenting which model handled which step, and **why** that model — so the pr
 - **Use Sonnet for "leaf" work**: a single isolated component, a single test, a single util.
 - **Use Haiku for "lookup" work** (none in this project): trivial reformatting, simple data extraction.
 - **Always do prompt caching** when interacting with the API: long system prompts (guidelines + capabilities) are cache-eligible and dramatically reduce cost on repeated calls.
+
+## Non-Anthropic models used (advisory only — no generated code landed in this repo)
+
+| Stage                                          | Model              | Why                                                                                       |
+| ---------------------------------------------- | ------------------ | ----------------------------------------------------------------------------------------- |
+| Pre-prompt brainstorming                       | Google Gemini      | Cheap "second opinion" before prompting Claude. Used to surface what to *ask* Claude, not what to *write*. |
+| Architecture sanity check                      | Google Gemini      | Independent suggestion for the monorepo/layering shape — used to confirm Claude's later proposal wasn't idiosyncratic. |
+
+Both Gemini outputs were summarized by the human and re-phrased into Claude prompts; Gemini did not produce any source file in this repo. See `prompts.md` §4 for the actual queries.

@@ -18,14 +18,14 @@ export function Sheet({ open, onOpenChange, title, description, children, footer
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
       <AnimatePresence>
         {open ? (
-          <Dialog.Portal forceMount>
+          <Dialog.Portal key="sheet-portal" forceMount>
             <Dialog.Overlay asChild forceMount>
               <motion.div
                 className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                transition={{ duration: 0.15 }}
+                transition={{ duration: 0.18, ease: 'easeOut' }}
               />
             </Dialog.Overlay>
             <Dialog.Content asChild forceMount>
@@ -36,7 +36,7 @@ export function Sheet({ open, onOpenChange, title, description, children, footer
                 initial={{ x: '100%' }}
                 animate={{ x: 0 }}
                 exit={{ x: '100%' }}
-                transition={{ type: 'spring', damping: 28, stiffness: 280 }}
+                transition={{ duration: 0.25, ease: [0.32, 0.72, 0, 1] }}
                 aria-describedby={undefined}
               >
                 <header className="flex items-start justify-between border-b border-slate-100 px-5 py-4">
