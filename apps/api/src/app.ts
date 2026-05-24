@@ -25,6 +25,7 @@ import { createProductsService } from '@/modules/products/products.service.js';
 import { createUsersRepository } from '@/modules/users/users.repository.js';
 import { createUsersRouter } from '@/modules/users/users.routes.js';
 import { createUsersService } from '@/modules/users/users.service.js';
+import { createDocsRouter } from '@/docs/router.js';
 import { prisma } from '@/db/prisma.js';
 import { logger } from '@/utils/logger.js';
 
@@ -85,6 +86,7 @@ export function createApp(): Express {
   app.use('/v1/cart', createCartRouter(cartService));
   app.use('/v1/orders', createOrdersRouter(ordersService, (id) => usersRepo.getEmail(id)));
   app.use('/v1/users', createUsersRouter(usersService));
+  app.use('/v1/docs', createDocsRouter());
 
   app.use(notFoundHandler);
   app.use(errorHandler);
