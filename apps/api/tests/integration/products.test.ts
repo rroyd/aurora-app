@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { agent } from './helpers/agent';
-import { seedCatalog, truncateAll } from './helpers/db';
+import { agent } from './helpers/agent.js';
+import { seedCatalog, truncateAll } from './helpers/db.js';
 
 describe('GET /v1/products', () => {
   beforeEach(truncateAll);

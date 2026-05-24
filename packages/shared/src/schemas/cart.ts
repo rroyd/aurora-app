@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { productSchema } from './product';
+import { productSchema } from './product.js';
 
 export const cartItemSchema = z.object({
   id: z.string(),

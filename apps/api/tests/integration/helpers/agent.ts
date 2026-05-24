@@ -1,8 +1,8 @@
-import './env';
-import request, { type SuperAgentTest } from 'supertest';
+import './env.js';
+import request from 'supertest';
 import { createApp } from '@/app.js';
 
-export type Agent = SuperAgentTest;
+export type Agent = ReturnType<typeof request.agent>;
 
 let app: ReturnType<typeof createApp> | null = null;
 

@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { paginationSchema } from './common';
+import { paginationSchema } from './common.js';
 
 export const addressSchema = z
   .object({

@@ -1,7 +1,7 @@
 import { afterAll, beforeEach, describe, expect, it } from 'vitest';
 import { prisma } from '@/db/prisma.js';
-import { agent } from './helpers/agent';
-import { seedCatalog, truncateAll } from './helpers/db';
+import { agent } from './helpers/agent.js';
+import { seedCatalog, truncateAll } from './helpers/db.js';
 
 const VALID_CARD = {
   number: '4242424242424242',

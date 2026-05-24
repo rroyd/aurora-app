@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { paginationSchema } from './common';
+import { paginationSchema } from './common.js';
 
 export const categorySchema = z.object({
   id: z.string(),

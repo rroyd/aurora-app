@@ -7,12 +7,8 @@ export interface AuthUser {
   id: string;
   role: 'CUSTOMER' | 'ADMIN';
 }
-
-declare module 'express-serve-static-core' {
-  interface Request {
-    user?: AuthUser;
-  }
-}
+// The `Request.user` augmentation lives in src/types/express.d.ts so it is
+// loaded globally, regardless of which file is imported first.
 
 function readAccessToken(req: Request): string | null {
   const header = req.header('authorization');

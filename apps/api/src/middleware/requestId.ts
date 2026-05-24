@@ -1,11 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import type { RequestHandler } from 'express';
 
-declare module 'express-serve-static-core' {
-  interface Request {
-    id: string;
-  }
-}
+// Request.id is augmented globally in src/types/express.d.ts.
 
 export const requestId = (): RequestHandler => (req, res, next) => {
   const incoming = req.header('x-request-id');

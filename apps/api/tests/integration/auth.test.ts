@@ -1,7 +1,7 @@
 import { afterAll, beforeEach, describe, expect, it } from 'vitest';
 import { prisma } from '@/db/prisma.js';
-import { agent } from './helpers/agent';
-import { truncateAll } from './helpers/db';
+import { agent } from './helpers/agent.js';
+import { truncateAll } from './helpers/db.js';
 
 const ENDPOINT = '/v1/auth';
 const validUser = () => ({

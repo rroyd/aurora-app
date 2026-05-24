@@ -2,7 +2,7 @@
 // Ensures the test DB exists and matches the current Prisma schema.
 import { execSync } from 'node:child_process';
 import { createConnection } from 'mysql2/promise';
-import './env';
+import './env.js';
 
 const DATABASE_URL = process.env.DATABASE_URL!;
 
