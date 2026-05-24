@@ -8,6 +8,7 @@ import { attachUserIfPresent } from '@/middleware/auth.js';
 import { errorHandler, notFoundHandler } from '@/middleware/error.js';
 import { globalLimiter } from '@/middleware/rateLimit.js';
 import { requestId } from '@/middleware/requestId.js';
+import { timing } from '@/middleware/timing.js';
 import { createAuthRepository } from '@/modules/auth/auth.repository.js';
 import { createAuthRouter } from '@/modules/auth/auth.routes.js';
 import { createAuthService } from '@/modules/auth/auth.service.js';
@@ -62,6 +63,7 @@ export function createApp(): Express {
   app.use(express.json({ limit: '100kb' }));
   app.use(cookieParser());
   app.use(requestId());
+  app.use(timing());
   app.use(pinoHttp({ logger, customProps: (req) => ({ requestId: req.id }) }));
   app.use(globalLimiter);
   app.use(attachUserIfPresent);

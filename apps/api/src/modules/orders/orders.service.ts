@@ -1,9 +1,13 @@
 import type { CreateOrderInput, Order, OrderListResponse } from '@shared/contracts';
 import { AppError } from '@/utils/AppError.js';
+import { TimeoutError, withTimeout } from '@/utils/withTimeout.js';
 import type { CartService } from '../cart/cart.service.js';
 import type { OrderWithItems, OrdersRepository } from './orders.repository.js';
 import { calculateTotals } from './orders.totals.js';
 import type { PaymentProvider } from './payment.provider.js';
+
+const PAYMENT_TIMEOUT_MS = 8_000;
+const ORDER_TX_TIMEOUT_MS = 10_000;
 
 function toOrder(o: OrderWithItems): Order {
   return {
@@ -56,18 +60,30 @@ export function createOrdersService(deps: {
         cart.items.map((i) => ({ priceCents: i.product.priceCents, quantity: i.quantity })),
       );
 
-      const charge = await deps.payment.charge({
-        amountCents: totals.totalCents,
-        currency: cart.currency,
-        idempotencyKey,
-        card: {
-          number: body.card.number.replace(/\s+/g, ''),
-          expMonth: body.card.expMonth,
-          expYear: body.card.expYear,
-          cvc: body.card.cvc,
-        },
-        customer: { id: userId, email: userEmail },
-      });
+      let charge;
+      try {
+        charge = await withTimeout(
+          deps.payment.charge({
+            amountCents: totals.totalCents,
+            currency: cart.currency,
+            idempotencyKey,
+            card: {
+              number: body.card.number.replace(/\s+/g, ''),
+              expMonth: body.card.expMonth,
+              expYear: body.card.expYear,
+              cvc: body.card.cvc,
+            },
+            customer: { id: userId, email: userEmail },
+          }),
+          PAYMENT_TIMEOUT_MS,
+          'payment.charge',
+        );
+      } catch (err) {
+        if (err instanceof TimeoutError) {
+          throw new AppError('INTERNAL', 504, 'Payment provider timeout');
+        }
+        throw err;
+      }
 
       if (charge.status !== 'succeeded') {
         const message =
@@ -79,15 +95,27 @@ export function createOrdersService(deps: {
         throw AppError.validation(message, { field: 'card.number', code: charge.failureCode });
       }
 
-      const order = await deps.orders.createOrder({
-        userId,
-        cartId: cart.id,
-        shippingAddress: body.shippingAddress,
-        totals,
-        paymentLast4: charge.last4,
-        paymentChargeId: charge.providerChargeId,
-        idempotencyKey,
-      });
+      let order;
+      try {
+        order = await withTimeout(
+          deps.orders.createOrder({
+            userId,
+            cartId: cart.id,
+            shippingAddress: body.shippingAddress,
+            totals,
+            paymentLast4: charge.last4,
+            paymentChargeId: charge.providerChargeId,
+            idempotencyKey,
+          }),
+          ORDER_TX_TIMEOUT_MS,
+          'orders.createOrder',
+        );
+      } catch (err) {
+        if (err instanceof TimeoutError) {
+          throw new AppError('INTERNAL', 504, 'Order persistence timeout');
+        }
+        throw err;
+      }
       return toOrder(order);
     },
 
