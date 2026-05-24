@@ -1,0 +1,10 @@
+# <type>(<scope>): <subject>   ← 60 char max, imperative ("add", not "added")
+#
+# Body — wrap at 72. Explain WHY, not what. Mention trade-offs.
+#
+# Footer — Closes #123 / Co-Authored-By: ...
+#
+# Types:  feat | fix | refactor | test | docs | chore | ci | build | perf
+# Scopes: api | web | shared | auth | products | cart | orders | users | docs | ci | build
+#
+# Activate this template once:    git config commit.template .gitmessage
