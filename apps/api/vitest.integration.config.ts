@@ -4,11 +4,13 @@ import { defineConfig } from 'vitest/config';
 export default defineConfig({
   test: {
     environment: 'node',
-    // Unit tests only — integration tests live under tests/integration/
-    // and run via vitest.integration.config.ts.
-    include: ['tests/**/*.test.ts'],
-    exclude: ['tests/integration/**', 'node_modules/**', 'dist/**'],
-    globals: false,
+    include: ['tests/integration/**/*.test.ts'],
+    setupFiles: ['./tests/integration/helpers/env.ts'],
+    globalSetup: ['./tests/integration/helpers/global-setup.ts'],
+    pool: 'forks',
+    poolOptions: { forks: { singleFork: true } },
+    testTimeout: 30_000,
+    hookTimeout: 30_000,
   },
   resolve: {
     alias: {

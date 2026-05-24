@@ -5,7 +5,10 @@ const baseCookie: CookieOptions = {
   httpOnly: true,
   secure: env.COOKIE_SECURE,
   sameSite: 'lax',
-  domain: env.COOKIE_DOMAIN,
+  // Only set the domain attribute when explicitly configured. Omitting it
+  // makes the cookie default to the request host, which is what we want for
+  // localhost dev and for integration tests served by supertest on 127.0.0.1.
+  ...(env.COOKIE_DOMAIN ? { domain: env.COOKIE_DOMAIN } : {}),
 };
 
 export function setAccessCookie(res: Response, token: string): void {

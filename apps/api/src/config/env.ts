@@ -14,7 +14,7 @@ const envSchema = z
     ACCESS_TOKEN_TTL: z.coerce.number().int().positive().default(900),
     REFRESH_TOKEN_TTL: z.coerce.number().int().positive().default(2_592_000),
 
-    COOKIE_DOMAIN: z.string().default('localhost'),
+    COOKIE_DOMAIN: z.string().optional().transform((v) => (v ? v : undefined)),
     COOKIE_SECURE: z
       .union([z.boolean(), z.enum(['true', 'false'])])
       .transform((v) => (typeof v === 'boolean' ? v : v === 'true'))
