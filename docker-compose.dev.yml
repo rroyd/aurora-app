@@ -1,0 +1,36 @@
+# Dev override — apply with: docker compose -f docker-compose.yml -f docker-compose.dev.yml up
+#
+# Mounts source into the api + web containers and runs them with tsx-watch / vite
+# so changes hot-reload without rebuilding the image.
+
+services:
+  api:
+    build:
+      target: build
+    working_dir: /repo/apps/api
+    command: ['pnpm', 'dev']
+    volumes:
+      - ./apps/api/src:/repo/apps/api/src
+      - ./apps/api/prisma:/repo/apps/api/prisma
+      - ./packages/shared/src:/repo/packages/shared/src
+    environment:
+      NODE_ENV: development
+    healthcheck:
+      disable: true
+
+  web:
+    build:
+      target: build
+    working_dir: /repo/apps/web
+    command: ['pnpm', 'dev', '--host', '0.0.0.0']
+    volumes:
+      - ./apps/web/src:/repo/apps/web/src
+      - ./apps/web/public:/repo/apps/web/public
+      - ./apps/web/index.html:/repo/apps/web/index.html
+      - ./packages/shared/src:/repo/packages/shared/src
+    ports:
+      - '5173:5173'
+    environment:
+      VITE_API_BASE_URL: http://localhost:4000
+    healthcheck:
+      disable: true

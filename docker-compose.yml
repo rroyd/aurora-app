@@ -1,7 +1,24 @@
+name: aurora
+
+x-api-env: &api-env
+  NODE_ENV: production
+  PORT: 4000
+  WEB_ORIGIN: http://localhost:5173
+  DATABASE_URL: mysql://app:apppw@mysql:3306/ecommerce
+  SHADOW_DATABASE_URL: mysql://root:rootpw@mysql:3306/ecommerce_shadow
+  JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET:-dev-access-secret-must-be-32-bytes-min-xyz}
+  JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:-dev-refresh-secret-must-be-32-bytes-min-xyz}
+  ACCESS_TOKEN_TTL: 900
+  REFRESH_TOKEN_TTL: 2592000
+  COOKIE_DOMAIN: localhost
+  COOKIE_SECURE: 'false'
+  RATE_LIMIT_STORE: memory
+  LOG_LEVEL: info
+
 services:
   mysql:
     image: mysql:8.0
-    container_name: ai-blueprint-mysql
+    container_name: aurora-mysql
     restart: unless-stopped
     environment:
       MYSQL_ROOT_PASSWORD: rootpw
@@ -12,11 +29,75 @@ services:
       - '3306:3306'
     volumes:
       - mysql_data:/var/lib/mysql
+      - ./scripts/mysql-init:/docker-entrypoint-initdb.d:ro
     healthcheck:
       test: ['CMD', 'mysqladmin', 'ping', '-h', 'localhost', '-uroot', '-prootpw']
       interval: 5s
       timeout: 5s
       retries: 20
+
+  # One-shot job: applies migrations and seeds the DB, then exits.
+  # Uses the Dockerfile's `build` stage (which has prisma CLI + tsx + full deps).
+  migrate:
+    image: aurora-migrate:latest
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+      target: build
+    container_name: aurora-migrate
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      <<: *api-env
+    working_dir: /repo/apps/api
+    entrypoint: ['/bin/sh', '-lc']
+    command: |
+      "pnpm prisma migrate deploy && pnpm tsx prisma/seed.ts"
+    restart: 'no'
+
+  api:
+    image: aurora-api:latest
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    container_name: aurora-api
+    restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    environment:
+      <<: *api-env
+    ports:
+      - '4000:4000'
+    healthcheck:
+      test: ['CMD', 'wget', '-q', '--spider', 'http://127.0.0.1:4000/healthz']
+      interval: 15s
+      timeout: 3s
+      retries: 3
+      start_period: 10s
+
+  web:
+    image: aurora-web:latest
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+      args:
+        VITE_API_BASE_URL: http://localhost:4000
+    container_name: aurora-web
+    restart: unless-stopped
+    depends_on:
+      api:
+        condition: service_healthy
+    ports:
+      - '5173:80'
+    healthcheck:
+      test: ['CMD', 'wget', '-q', '--spider', 'http://127.0.0.1/']
+      interval: 15s
+      timeout: 3s
+      retries: 3
 
 volumes:
   mysql_data:
