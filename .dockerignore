@@ -1,0 +1,38 @@
+**/node_modules
+**/dist
+**/build
+**/.next
+**/.cache
+**/.turbo
+**/.vite
+
+# Tests, coverage, source maps
+**/coverage
+**/*.log
+**/.DS_Store
+
+# Local env (must never enter the image)
+**/.env
+**/.env.*
+!**/.env.example
+
+# Editor / VCS
+.git
+.github
+.gitignore
+.vscode
+.idea
+.editorconfig
+.prettierrc
+
+# Docs that don't need to live in the image
+README.md
+CONTRIBUTING.md
+docs
+ai
+docker-compose*.yml
+.dockerignore
+Dockerfile*
+
+# Prisma local artifacts
+**/prisma/migrations/dev.db*
